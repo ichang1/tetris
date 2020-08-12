@@ -253,13 +253,23 @@ const all_blocks = [
     o_rotations,
     i_rotations
 ]
+
+const numToColor = {
+    1:'952D98',
+    2:'ED2939',
+    3:'69BE28',
+    4:'0065BD',
+    5:'FF7900',
+    6:'FECB00',
+    7:'009FDA'
+}
 const player = {
     'curPos' : [0,0],
     'blockNum' : 0,
     'rotNum': 0
 };
 
-const gameGrid = createMatrix(20,10);    //gameGrid to keep track of stuck pieces
+var gameGrid = createGrid(20,10);    //gameGrid to keep track of stuck pieces
 
 function generateBlockNum(){
     return Math.floor(Math.random()*7);
@@ -291,7 +301,7 @@ function collisionExists(player, gameGrid){
     return false;
 }
 //make matrix of 0s
-function createMatrix(numRow, numCol){
+function createGrid(numRow, numCol){
     const newMatrix = [];
     while (numRow !== 0){
         newMatrix.push(new Array(numCol).fill(0));
@@ -313,29 +323,44 @@ function blockToGrid(player, gameGrid){
 }
 
 //draw matrix onto board
+// 1 => t piece => purple
+// 2 => z piece => red
+// 3 => s piece => green
+// 4 => j piece => dark blue
+// 5 => l piece => orange
+// 6 => o piece => yellow
+// 7 => i piece => light blue
 function drawMatrix(block, delta) {
     block.forEach((row, y) => {
-        row.forEach((value,x) => {
-            if (value !== 0) {
-                context.fillStyle = 'red';
+        row.forEach((val,x) => {
+            if (val !== 0) {
+                context.fillStyle = '#'+numToColor[val];
                 context.fillRect((x+delta[0])*24,
                                  (y+delta[1])*24,
                                  24,
                                  24);
-            };
+            }
         });
     });
 }
 
 //clear lines
 function updateGrid(player, gameGrid){
-
+    let width = gameGrid[0].length
+    // loop backwars to prevent index error when deleting
+    for (var row=gameGrid.length-1; row >=0; row--){
+        if (!gameGrid[row].includes(0)){
+            gameGrid.splice(row,1);
+            gameGrid.unshift(new Array(width).fill(0));
+        }
+    }
 }
 
 //function to draw grid and current block
 function draw(){
     context.fillStyle = '#000';
     context.fillRect(0,0,canvas.width,canvas.height);
+    updateGrid(player, gameGrid);
     drawMatrix(gameGrid, [0,0]);
     drawMatrix(getBlock(), player['curPos']);
 }
@@ -395,6 +420,7 @@ function playerRotate(dir){
 var stopTime = 0; //time elapsed before auto moving down
 var maxStopTime = 1000;  //max time before auto moving down
 var prevTime = 0;    //prev log time since page load
+
 function update(time = 0){
     const deltaTime = time - prevTime; //diff time between updates
     prevTime = time; //updateprevious time since page load
@@ -420,11 +446,26 @@ document.addEventListener('keydown', event => {
         playerRotate(-1);
     }
 })
+
+function play(){
+    update();
+}
+
 function start(){
     player['curPos'] = [3,0];
     player['blockNum'] = generateBlockNum();
     player['rotNum']= 0;
-    update();
+    gameGrid = createGrid(20,10);
+}
+function lose(gameGrid){
+    return (gameGrid[0][3] !== 0 ||
+           gameGrid[0][4] !== 0 ||
+           gameGrid[0][4] !== 0 ||
+           gameGrid[0][6] !== 0);
 }
 
-start();
+function game(){
+    start();
+    play();
+}
+game();
