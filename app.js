@@ -266,7 +266,8 @@ const numToColor = {
 const player = {
     'curPos' : [0,0],
     'blockNum' : 0,
-    'rotNum': 0
+    'rotNum': 0,
+    'score': 0
 };
 
 var gameGrid = createGrid(20,10);    //gameGrid to keep track of stuck pieces
@@ -281,6 +282,9 @@ function getBlock(){
 
 function collisionExists(player, gameGrid){
     const [block, pos] = [getBlock(),player['curPos']];
+    if (pos[1]<0){ //not in grid yet
+        return false;
+    } else
     //iterate through block
     //check each block component against corresponding position in gameGrid at cur player pos
     for (let y=0; y < block.length; y++){
@@ -315,8 +319,9 @@ function blockToGrid(player, gameGrid){
     var block = getBlock();
     block.forEach((row, y) => {
         row.forEach((value, x) => {
-            if (value !== 0){
-                gameGrid[y + player['curPos'][1]][x + player['curPos'][0]] = value;
+            const [posX, posY] = [x + player['curPos'][0],y + player['curPos'][1]];
+            if (value !== 0 && posX >=0 && posY>=0){
+                gameGrid[posY][posX] = value;
             }
         })
     })
@@ -350,10 +355,15 @@ function updateGrid(player, gameGrid){
     // loop backwars to prevent index error when deleting
     for (var row=gameGrid.length-1; row >=0; row--){
         if (!gameGrid[row].includes(0)){
-            gameGrid.splice(row,1);
-            gameGrid.unshift(new Array(width).fill(0));
+            const filledRow = gameGrid.splice(row,1)[0];
+            player['score'] += 10;
+            gameGrid.unshift(filledRow.fill(0));
         }
     }
+}
+
+function updateScore(player) {
+    document.getElementById('score').innerText = player['score'];
 }
 
 //function to draw grid and current block
@@ -361,6 +371,7 @@ function draw(){
     context.fillStyle = '#000';
     context.fillRect(0,0,canvas.width,canvas.height);
     updateGrid(player, gameGrid);
+    updateScore(player);
     drawMatrix(gameGrid, [0,0]);
     drawMatrix(getBlock(), player['curPos']);
 }
@@ -368,14 +379,23 @@ function draw(){
 //move player down
 function playerMoveDown(){
     player['curPos'][1] ++; //move down one
-    if (collisionExists(player, gameGrid)){
+    if (collisionExists(player,gameGrid)){
         player['curPos'][1] --; //move back up one
         blockToGrid(player, gameGrid);  //block can't move down, mark this in gameGrid
-        player['curPos'] = [3,0]; //go back to row 0, col 3
-        player['blockNum'] = generateBlockNum();
-        player['rotNum'] = 0;
+        if (!lose(gameGrid)){
+            player['curPos'] = [3,-1]; //go back to row 0, col 3
+            player['blockNum'] = generateBlockNum();
+            player['rotNum'] = 0;
+        } else{
+            stopTime = 0;
+            console.log('Game Over!');
+            console.log('Final score: ' + player['score']);
+            return true; //bool athat we lost
+        }
+
     }
     stopTime = 0;    //reset time elapsed before auto moving down
+    return false;   //bool that didn't lose yet
 }
 
 //move player left and right
@@ -421,42 +441,45 @@ var stopTime = 0; //time elapsed before auto moving down
 var maxStopTime = 1000;  //max time before auto moving down
 var prevTime = 0;    //prev log time since page load
 
-function update(time = 0){
+function play(time = 0){
     const deltaTime = time - prevTime; //diff time between updates
     prevTime = time; //updateprevious time since page load
 
     stopTime += deltaTime;   //add to time elapsed since last auto down move
     if (stopTime > maxStopTime){    //time at cur pos is more than max allowed
-        playerMoveDown();
+        let lost = playerMoveDown();   //move block down
+        if (lost){
+            return;
+        }
     }
     draw();
-    requestAnimationFrame(update);
+    requestAnimationFrame(play);
 }
 
 document.addEventListener('keydown', event => {
-    if (event['key'] === 'ArrowRight'){
-        playerMoveLateral(1);
-    } else if (event['key'] === 'ArrowLeft'){
-        playerMoveLateral(-1);
-    } else if (event['key'] === 'ArrowDown'){
-        playerMoveDown();
-    } else if (event['key'] === 'ArrowUp'){
-        playerRotate(1);
-    } else if (event['key'] === 'z'){
-        playerRotate(-1);
+    if (!lose(gameGrid)) {
+        if (event['key'] === 'ArrowRight'){
+            playerMoveLateral(1);
+        } else if (event['key'] === 'ArrowLeft'){
+            playerMoveLateral(-1);
+        } else if (event['key'] === 'ArrowDown'){
+            playerMoveDown();
+        } else if (event['key'] === 'ArrowUp'){
+            playerRotate(1);
+        } else if (event['key'] === 'z'){
+            playerRotate(-1);
+        }
     }
 })
 
-function play(){
-    update();
-}
-
 function start(){
-    player['curPos'] = [3,0];
+    player['curPos'] = [3,-1];
     player['blockNum'] = generateBlockNum();
     player['rotNum']= 0;
     gameGrid = createGrid(20,10);
+    play()
 }
+
 function lose(gameGrid){
     return (gameGrid[0][3] !== 0 ||
            gameGrid[0][4] !== 0 ||
@@ -466,6 +489,5 @@ function lose(gameGrid){
 
 function game(){
     start();
-    play();
 }
 game();
