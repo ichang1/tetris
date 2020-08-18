@@ -363,7 +363,7 @@ function updateGrid(player, gameGrid){
 }
 
 function updateScore(player) {
-    document.getElementById('score').innerText = player['score'];
+    document.getElementById('score').innerText = 'Score: ' + player['score'];
 }
 
 //function to draw grid and current block
@@ -377,6 +377,27 @@ function draw(){
 }
 
 //move player down
+function playerHardDown(){
+    while(!collisionExists(player,gameGrid)){
+        player['curPos'][1] ++; //move down one
+    }
+    if (collisionExists(player,gameGrid)){
+        player['curPos'][1] --; //move back up one
+        blockToGrid(player, gameGrid);  //block can't move down, mark this in gameGrid
+        if (!lose(gameGrid)){
+            player['curPos'] = [3,-1]; //go back to row 0, col 3
+            player['blockNum'] = generateBlockNum();
+            player['rotNum'] = 0;
+        } else{
+            console.log('Game Over!');
+            console.log('Final score: ' + player['score']);
+            return true; //bool athat we lost
+        }
+    }
+    stopTime = 0;    //reset time elapsed before auto moving down
+    return false;   //bool that didn't lose yet
+}
+
 function playerMoveDown(){
     player['curPos'][1] ++; //move down one
     if (collisionExists(player,gameGrid)){
@@ -387,7 +408,6 @@ function playerMoveDown(){
             player['blockNum'] = generateBlockNum();
             player['rotNum'] = 0;
         } else{
-            stopTime = 0;
             console.log('Game Over!');
             console.log('Final score: ' + player['score']);
             return true; //bool athat we lost
@@ -438,7 +458,7 @@ function playerRotate(dir){
 }
 
 var stopTime = 0; //time elapsed before auto moving down
-var maxStopTime = 1000;  //max time before auto moving down
+var maxStopTime = 800;  //max time before auto moving down
 var prevTime = 0;    //prev log time since page load
 
 function play(time = 0){
@@ -457,6 +477,7 @@ function play(time = 0){
 }
 
 document.addEventListener('keydown', event => {
+    //console.log(event);
     if (!lose(gameGrid)) {
         if (event['key'] === 'ArrowRight'){
             playerMoveLateral(1);
@@ -468,6 +489,8 @@ document.addEventListener('keydown', event => {
             playerRotate(1);
         } else if (event['key'] === 'z'){
             playerRotate(-1);
+        } else if (event['key'] === ' '){
+            playerHardDown();
         }
     }
 })
