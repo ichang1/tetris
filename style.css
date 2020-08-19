@@ -1,16 +1,15 @@
-.grid {
-  width: 240px;
-  height: 480px;
-  display: flex;
-  flex-wrap: wrap;
-  background-color: yellow;
+body {
+  background: #202028;
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 2em;
+  text-align: center;
 }
-
-.grid div {
+/* .grid div {
   width: 24px;
   height: 24px;
-}
-
-.tetrimino {
-  background-color: red;
+}  */
+canvas {
+ border: solid .2em #fff;
+ height: 80vh;
 }
