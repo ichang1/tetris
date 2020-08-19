@@ -34,7 +34,6 @@ const t_rotations = [
         [0,1,0]
     ]
 ];
-
 const z_rotations = [
     [
         [2,2,0],
@@ -265,6 +264,7 @@ const numToColor = {
 }
 const player = {
     'curPos' : [0,0],
+    'nextSeven':[],
     'blockNum' : 0,
     'rotNum': 0,
     'score': 0
@@ -277,14 +277,21 @@ function generateBlockNum(){
 }
 
 function getBlock(){
+    //return nextSeven[0][player['rotNum']];
     return all_blocks[player['blockNum']][player['rotNum']];
 }
 
 function collisionExists(player, gameGrid){
     const [block, pos] = [getBlock(),player['curPos']];
-    if (pos[1]<0){ //not in grid yet
-        return false;
-    } else
+    console.log(block[0].length + pos[0],pos[0]);
+    if (pos[1] < 0){
+        //not fully in grid yet
+        if (pos[0] >= 0 && block[0].length + pos[0] - 1 <= 9){
+            return false;
+        } else{
+            return true;
+        }
+    }
     //iterate through block
     //check each block component against corresponding position in gameGrid at cur player pos
     for (let y=0; y < block.length; y++){
@@ -316,7 +323,7 @@ function createGrid(numRow, numCol){
 
 //draw current tetrimino to gamegrid
 function blockToGrid(player, gameGrid){
-    var block = getBlock();
+    let block = getBlock();
     block.forEach((row, y) => {
         row.forEach((value, x) => {
             const [posX, posY] = [x + player['curPos'][0],y + player['curPos'][1]];
@@ -353,7 +360,7 @@ function drawMatrix(block, delta) {
 function updateGrid(player, gameGrid){
     let width = gameGrid[0].length
     // loop backwars to prevent index error when deleting
-    for (var row=gameGrid.length-1; row >=0; row--){
+    for (let row=gameGrid.length-1; row >=0; row--){
         if (!gameGrid[row].includes(0)){
             const filledRow = gameGrid.splice(row,1)[0];
             player['score'] += 10;
@@ -376,7 +383,32 @@ function draw(){
     drawMatrix(getBlock(), player['curPos']);
 }
 
-//move player down
+//get next 7 pieces
+function getSeven(){
+    let nextSeven = [0,1,2,3,4,5,6];
+
+    //shuffle
+    let ranNum;
+    let temp;
+    for (let i=0;i<7;i++){
+        ranNum = Math.floor(Math.random()*7);
+        [nextSeven[i],nextSeven[ranNum]]=[nextSeven[ranNum],nextSeven[i]];
+    }
+    return nextSeven;
+}
+
+function reset(){
+    player['curPos'] = [3,-1]; //go back to row 0, col 3
+    if (player['nextSeven'].length > 0){
+        player['nextSeven'].shift();
+    }
+    if (player['nextSeven'].length === 0){
+        player['nextSeven'] = getSeven();
+    }
+    player['blockNum'] = player['nextSeven'][0];
+    player['rotNum'] = 0;
+}
+//player hard drop
 function playerHardDown(){
     while(!collisionExists(player,gameGrid)){
         player['curPos'][1] ++; //move down one
@@ -385,9 +417,7 @@ function playerHardDown(){
         player['curPos'][1] --; //move back up one
         blockToGrid(player, gameGrid);  //block can't move down, mark this in gameGrid
         if (!lose(gameGrid)){
-            player['curPos'] = [3,-1]; //go back to row 0, col 3
-            player['blockNum'] = generateBlockNum();
-            player['rotNum'] = 0;
+            reset();
         } else{
             console.log('Game Over!');
             console.log('Final score: ' + player['score']);
@@ -404,9 +434,7 @@ function playerMoveDown(){
         player['curPos'][1] --; //move back up one
         blockToGrid(player, gameGrid);  //block can't move down, mark this in gameGrid
         if (!lose(gameGrid)){
-            player['curPos'] = [3,-1]; //go back to row 0, col 3
-            player['blockNum'] = generateBlockNum();
-            player['rotNum'] = 0;
+            reset();
         } else{
             console.log('Game Over!');
             console.log('Final score: ' + player['score']);
@@ -431,13 +459,13 @@ function rotate(dir) {
 }
 
 function playerRotate(dir){
-    var oldPos = player['curPos'];
-    var curBlockNum = player['blockNum'];
-    var curRotNum = player['rotNum'];
+    let oldPos = player['curPos'];
+    let curBlockNum = player['blockNum'];
+    let curRotNum = player['rotNum'];
     rotate(dir);
-    var newRotNum = player['rotNum'];
-    for (var i=0; i<5; i++){
-        var offset;
+    let newRotNum = player['rotNum'];
+    for (let i=0; i<5; i++){
+        let offset;
         //console.log(newRotNum);
         //console.log(jlstz_offset[newRotNum][i]);
         if (curBlockNum <= 4){  //jlstz
@@ -496,9 +524,7 @@ document.addEventListener('keydown', event => {
 })
 
 function start(){
-    player['curPos'] = [3,-1];
-    player['blockNum'] = generateBlockNum();
-    player['rotNum']= 0;
+    reset();
     gameGrid = createGrid(20,10);
     play()
 }
@@ -513,4 +539,5 @@ function lose(gameGrid){
 function game(){
     start();
 }
+
 game();
