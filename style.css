@@ -9,7 +9,12 @@ body {
   width: 24px;
   height: 24px;
 }  */
-canvas {
+#tetris {
  border: solid .2em #fff;
  height: 80vh;
+}
+
+#tetris-hold {
+ border: solid .2em #fff;
+ height: 16vh;
 }
