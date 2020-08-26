@@ -4,6 +4,13 @@ const context = canvas.getContext('2d');
 context.fillStyle = '#000';
 context.fillRect(0,0,canvas.width,canvas.height);
 
+const hold_canvas = document.getElementById('tetris-hold');
+const hold_context = hold_canvas.getContext('2d');
+
+hold_context.fillStyle = '#000';
+hold_context.fillRect(500,0,hold_canvas.width,hold_canvas.height);
+
+
 //initial, 1 CW, 2 CW, 3 CW
 // 1 => t piece
 // 2 => z piece
@@ -267,6 +274,8 @@ const player = {
     'nextSeven':[],
     'blockNum' : 0,
     'rotNum': 0,
+    'holdBlockNum' : -1,
+    'hasHold' : false,
     'score': 0
 };
 
@@ -281,9 +290,12 @@ function getBlock(){
     return all_blocks[player['blockNum']][player['rotNum']];
 }
 
+function getHoldBlock(){
+    return all_blocks[player['holdBlockNum']][0];
+}
+
 function collisionExists(player, gameGrid){
     const [block, pos] = [getBlock(),player['curPos']];
-    console.log(block[0].length + pos[0],pos[0]);
     if (pos[1] < 0){
         //not fully in grid yet
         if (pos[0] >= 0 && block[0].length + pos[0] - 1 <= 9){
@@ -356,6 +368,32 @@ function drawMatrix(block, delta) {
     });
 }
 
+function drawHold(block){
+    block.forEach((row, y) => {
+        row.forEach((val,x) => {
+            if (val !== 0) {
+                hold_context.fillStyle = '#'+numToColor[val];
+                hold_context.fillRect(x*24,
+                                      y*24,
+                                      24,
+                                      24);
+            }
+        });
+    });
+}
+
+function undrawHold(){
+    for (let y=0;y<4;y++){
+        for(let x=0;x<4;x++){
+            hold_context.fillStyle = '#000';
+            hold_context.fillRect(x*24,
+                                  y*24,
+                                  24,
+                                  24);
+        }
+    }
+}
+
 //clear lines
 function updateGrid(player, gameGrid){
     let width = gameGrid[0].length
@@ -381,6 +419,10 @@ function draw(){
     updateScore(player);
     drawMatrix(gameGrid, [0,0]);
     drawMatrix(getBlock(), player['curPos']);
+    if (player['holdBlockNum'] >= 0){
+        undrawHold();
+        drawHold(getHoldBlock(), [11,0]);
+    }
 }
 
 //get next 7 pieces
@@ -397,9 +439,10 @@ function getSeven(){
     return nextSeven;
 }
 
-function reset(){
+function nextPiece(){
     player['curPos'] = [3,-1]; //go back to row 0, col 3
     if (player['nextSeven'].length > 0){
+        //del leading piece
         player['nextSeven'].shift();
     }
     if (player['nextSeven'].length === 0){
@@ -408,24 +451,22 @@ function reset(){
     player['blockNum'] = player['nextSeven'][0];
     player['rotNum'] = 0;
 }
+
 //player hard drop
 function playerHardDown(){
     while(!collisionExists(player,gameGrid)){
         player['curPos'][1] ++; //move down one
     }
-    if (collisionExists(player,gameGrid)){
-        player['curPos'][1] --; //move back up one
-        blockToGrid(player, gameGrid);  //block can't move down, mark this in gameGrid
-        if (!lose(gameGrid)){
-            reset();
-        } else{
-            console.log('Game Over!');
-            console.log('Final score: ' + player['score']);
-            return true; //bool athat we lost
-        }
+    player['curPos'][1] --; //move back up one
+    blockToGrid(player, gameGrid);  //block can't move down, mark this in gameGrid
+    if (!lose(gameGrid)){
+        nextPiece();
+    } else{
+        stopTime = 0;    //nextPiece time elapsed before auto moving down
+        return; //bool athat we lost
     }
-    stopTime = 0;    //reset time elapsed before auto moving down
-    return false;   //bool that didn't lose yet
+    player['hasHold'] = false;
+    stopTime = 0;
 }
 
 function playerMoveDown(){
@@ -434,7 +475,8 @@ function playerMoveDown(){
         player['curPos'][1] --; //move back up one
         blockToGrid(player, gameGrid);  //block can't move down, mark this in gameGrid
         if (!lose(gameGrid)){
-            reset();
+            player['hasHold'] = false
+            nextPiece();
         } else{
             console.log('Game Over!');
             console.log('Final score: ' + player['score']);
@@ -442,7 +484,7 @@ function playerMoveDown(){
         }
 
     }
-    stopTime = 0;    //reset time elapsed before auto moving down
+    stopTime = 0;    //nextPiece time elapsed before auto moving down
     return false;   //bool that didn't lose yet
 }
 
@@ -466,8 +508,6 @@ function playerRotate(dir){
     let newRotNum = player['rotNum'];
     for (let i=0; i<5; i++){
         let offset;
-        //console.log(newRotNum);
-        //console.log(jlstz_offset[newRotNum][i]);
         if (curBlockNum <= 4){  //jlstz
             offset = jlstz_offset[curRotNum][i].map((e,k) => e-jlstz_offset[newRotNum][i][k]);
         } else if (curBlockNum === 5){ //o
@@ -485,15 +525,26 @@ function playerRotate(dir){
     rotate(-dir);
 }
 
-var stopTime = 0; //time elapsed before auto moving down
-var maxStopTime = 800;  //max time before auto moving down
-var prevTime = 0;    //prev log time since page load
+function playerHold(){
+    //if there is a piece in hold, insert it index 1 in next seven array
+    if (player['holdBlockNum'] !== -1){
+        player['nextSeven'].splice(1,0,player['holdBlockNum']);
+    }
+    //hold block is the block at index 0
+    player['holdBlockNum'] = player['nextSeven'][0];
+    nextPiece();
+    player['hasHold'] = true;
+}
 
+var stopTime = 0; //time elapsed before auto moving down
+var maxStopTime = 1000;  //max time before auto moving down
+var prevTime = 0;    //prev log time since page load
+// maybe add a time before locking
 function play(time = 0){
     const deltaTime = time - prevTime; //diff time between updates
     prevTime = time; //updateprevious time since page load
 
-    stopTime += deltaTime;   //add to time elapsed since last auto down move
+    stopTime += deltaTime;   // add to time elapsed since last auto down move
     if (stopTime > maxStopTime){    //time at cur pos is more than max allowed
         let lost = playerMoveDown();   //move block down
         if (lost){
@@ -519,12 +570,14 @@ document.addEventListener('keydown', event => {
             playerRotate(-1);
         } else if (event['key'] === ' '){
             playerHardDown();
+        } else if (event['key'] === 'Control' && !player['hasHold']){
+            playerHold();
         }
     }
 })
 
 function start(){
-    reset();
+    nextPiece();
     gameGrid = createGrid(20,10);
     play()
 }
