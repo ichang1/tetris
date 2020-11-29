@@ -421,7 +421,7 @@ function draw(){
     drawMatrix(getBlock(), player['curPos']);
     if (player['holdBlockNum'] >= 0){
         undrawHold();
-        drawHold(getHoldBlock(), [11,0]);
+        drawHold(getHoldBlock());
     }
 }
 
