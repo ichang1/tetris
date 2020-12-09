@@ -276,7 +276,9 @@ const player = {
     'rotNum': 0,
     'holdBlockNum' : -1,
     'hasHold' : false,
-    'score': 0
+    'score': 0,
+    'lines': 0,
+    'level': 1
 };
 
 var gameGrid = createGrid(20,10);    //gameGrid to keep track of stuck pieces
@@ -398,25 +400,47 @@ function undrawHold(){
 function updateGrid(player, gameGrid){
     let width = gameGrid[0].length
     // loop backwars to prevent index error when deleting
+    let consecutive = 0;
     for (let row=gameGrid.length-1; row >=0; row--){
         if (!gameGrid[row].includes(0)){
             const filledRow = gameGrid.splice(row,1)[0];
-            player['score'] += 10;
+            player['score'] += 5;
+            player['lines'] += 1;
+            consecutive += 1;
             gameGrid.unshift(filledRow.fill(0));
+        } else{
+            consecutive = 0;
         }
+    }
+    player['score'] += 10*Math.floor(consecutive/2);
+}
+
+function updateLevel(player){
+    if (player['lines'] -15*player['level'] >= 0){
+        player['level'] += 1;
     }
 }
 
-function updateScore(player) {
-    document.getElementById('score').innerText = 'Score: ' + player['score'];
+function updateGravity(player){
+    if (maxStopTime > 200){
+        maxStopTime = 1000 - player['level']*50;
+    }
+}
+
+function updateData(player) {
+    document.getElementById('score').innerText = "Score: " + player['score'];
+    document.getElementById('lines').innerText = player['lines'];
+    document.getElementById('level').innerText = "Level: " + player['level'];
 }
 
 //function to draw grid and current block
-function draw(){
+function update(){
     context.fillStyle = '#000';
     context.fillRect(0,0,canvas.width,canvas.height);
     updateGrid(player, gameGrid);
-    updateScore(player);
+    updateData(player);
+    updateLevel(player);
+    updateGravity(player);
     drawMatrix(gameGrid, [0,0]);
     drawMatrix(getBlock(), player['curPos']);
     if (player['holdBlockNum'] >= 0){
@@ -478,8 +502,6 @@ function playerMoveDown(){
             player['hasHold'] = false
             nextPiece();
         } else{
-            console.log('Game Over!');
-            console.log('Final score: ' + player['score']);
             return true; //bool athat we lost
         }
 
@@ -517,6 +539,7 @@ function playerRotate(dir){
         }
         player['curPos'] = player['curPos'].map((e,k) => e + offset[k]);
         if (!collisionExists(player, gameGrid)){
+            console.log(player['curPos']);
             return;
         } else {
             player['curPos'] = oldPos;
@@ -548,10 +571,13 @@ function play(time = 0){
     if (stopTime > maxStopTime){    //time at cur pos is more than max allowed
         let lost = playerMoveDown();   //move block down
         if (lost){
+            document.getElementById('lost').innerHTML = '1';
+            console.log('Game Over!');
+            console.log('Final score: ' + player['score']);
             return;
         }
     }
-    draw();
+    update();
     requestAnimationFrame(play);
 }
 
@@ -576,7 +602,7 @@ document.addEventListener('keydown', event => {
     }
 })
 
-function start(){
+function game(){
     nextPiece();
     gameGrid = createGrid(20,10);
     play()
@@ -587,10 +613,6 @@ function lose(gameGrid){
            gameGrid[0][4] !== 0 ||
            gameGrid[0][4] !== 0 ||
            gameGrid[0][6] !== 0);
-}
-
-function game(){
-    start();
 }
 
 game();
