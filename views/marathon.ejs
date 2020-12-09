@@ -3,57 +3,33 @@
     <head>
         <meta charset="utf-8"></meta>
         <title>Tetris</title>
-        <link rel="stylesheet" href="style.css"></link>
+        <link rel="stylesheet" href="marathon_style.css"></link>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
-    <body>
+    <body style="font-family: Aldrich, sans-serif;">
         <div id="score"></div>
         <div hidden id="lines"></div>
         <div id="level"></div>
-        <form id="game-data" action="/submit" method="POST">
-            <input type="text" id="hidden-score" name="score" style="display:none;"> 
-            <input type="text" id="hidden-lines" name="lines" style="display:none;">
-            <input type="text" id="hidden-level" name="level" style="display:none;">
-            <input id="game-submit" type="button" value="submit" style="visibility:hidden;" onsubmit="submit();">
-        </form>
         <div hidden id="lost" >0</div>
+        <div>
+            <button onClick="window.location.reload();">Restart</button>
+        </div>
         <canvas id="tetris" width="240" height="480"></canvas>
         <canvas id="tetris-hold" width="96" height="96"></canvas>
         <script src="marathon_play.js"></script>
+        <form id="game-data" action="/submit" method="post">
+            <input type="text" id="hidden-score" name="score" style="display:none;"> 
+            <input type="text" id="hidden-lines" name="lines" style="display:none;">
+            <input type="text" id="hidden-level" name="level" style="display:none;">
+            <input type="text" id="hidden-name" name="name" value="<%= name %>" style="display:none;">
+            <input id="game-submit" type="submit" value="submit" style="visibility:hidden;">
+        </form>
+        <div id="message" style="visibility:hidden;">Well done! <%= name %>, you're a tetris champion!</div>
         <script>
             $("body").on('DOMSubtreeModified',"#lost",()=> {
                 document.getElementById("game-submit").style.visibility = "visible";
+                document.getElementById("message").style.visibility = "visible";
             });
-        </script>
-        <script>
-            document.getElementById("score").innerHTML;
-        </script>
-        <script>
-            /* attach a submit handler to the form */
-            $("#game-data").submit(()=> {
-                // /* stop form from submitting normally */
-                // //event.preventDefault();
-
-                /* get some values from elements on the page: */
-                var $form = $(this),
-                    url = $form.attr('action');
-
-                /* Send the data using post */
-                var posting = $.post(url, {
-                    score: $("#score").val(),
-                    lines: $("#lines").val(),
-                    level: $("#level").val()
-                });
-
-            });
-        </script>
-        <script>
-            function submit(){
-                document.getElementById("hidden-score").value = document.getElementById("score").innerHTML;
-                document.getElementById("hidden-lines").value = document.getElementById("lines").innerHTML;
-                document.getElementById("hidden-level").value = document.getElementById("level").innerHTML;
-                return true
-            };
         </script>
     </body>
 </html>

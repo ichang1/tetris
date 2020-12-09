@@ -4,7 +4,7 @@ body {
   font-family: sans-serif;
   font-size: 2em;
   text-align: center;
-  height: 80vh;
+  height: 75vh;
 }
 /* .grid div {
   width: 24px;
@@ -12,10 +12,10 @@ body {
 }  */
 #tetris {
  border: solid .2em #fff;
- height: 70vh;
+ height: 65vh;
 }
 
 #tetris-hold {
  border: solid .2em #fff;
- height: 13vh;
+ height: 11vh;
 }

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('navHeader.ejs') %>
+</head>
+<body class="text-right text-sm-right text-md-right text-lg-right text-xl-right" style="font-family: Aldrich, sans-serif;">
+    <%- include('nav.ejs') %>
+    <table class="table table-bordered table-hover" style="text-align: center;">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Level</th>
+                <th>Score</th>
+                <th>Lines</th>
+                <th>Player</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% for(let i=0; i<data.length; i++) {%>
+                <tr>
+                    <td><%= i+1 %></td>
+                    <td><%= data[i].level %></td>
+                    <td><%= data[i].score %></td>
+                    <td><%= data[i].lines %></td>
+                    <td><%= data[i].player %></td>
+                </tr>
+             <% } %>
+        </tbody>
+    </table>
+</body>
+    
+</html>

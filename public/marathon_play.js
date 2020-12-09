@@ -572,6 +572,9 @@ function play(time = 0){
         let lost = playerMoveDown();   //move block down
         if (lost){
             document.getElementById('lost').innerHTML = '1';
+            document.getElementById("hidden-score").value = player['score'];
+            document.getElementById("hidden-lines").value = player['lines'];
+            document.getElementById("hidden-level").value = player['level'];
             console.log('Game Over!');
             console.log('Final score: ' + player['score']);
             return;

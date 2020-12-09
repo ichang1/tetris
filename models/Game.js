@@ -10,9 +10,6 @@ const GameSchema = mongoose.Schema({
     score: {
         type: Number
     },
-    time: {
-        type: Number
-    },
     level: {
         type: Number,
         default: 0
@@ -20,19 +17,10 @@ const GameSchema = mongoose.Schema({
     lines: {
         type: Number
     },
-    combo: {
-        type: Number
-    },
-    tetris: {
-        type: Number
-    },
-    tspin: {
-        type: Number
-    },
-    date_joined: {
+    date: {
         type: Date,
         default: Date.now
     }
 });
 
-module.export = mongoose.model('Game', GameSchema);
+module.exports = mongoose.model('Game', GameSchema);

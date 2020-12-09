@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
     <%- include('navHeader.ejs') %>
+    <link rel="stylesheet" href="tetris_gif.css"></link>
 </head>
 <body class="text-right text-sm-right text-md-right text-lg-right text-xl-right" style="font-family: Aldrich, sans-serif;">
     <%- include('nav.ejs') %>
+    <form style="text-align: center;" action='/play' method="post">
+        <input type="text" id="username" placeholder="Your username" name="username">
+        <input type="submit" value="Play">
+    </form>
+    <img id="tetris_gif" src="/tetris.gif">
 </body>
     
 </html>

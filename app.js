@@ -4,6 +4,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const Game = require('./models/Game');
 require('dotenv/config');
 
 // app.engine('ejs', require('express-ejs-extend')); // add this line
@@ -34,15 +35,56 @@ app.get('/',(req, res) =>{
     res.render('home');
 });
 
-app.get('/play',(req, res) =>{
-    res.render('marathon');
+app.post('/play',(req, res) =>{
+    const name = req.body.username;
+    res.render('marathon',{name: name});
 });
 
-app.post('/submit',(req, res) =>{
-    console.log(req.body);
+app.post('/submit', async (req, res) =>{
+    const gameData = new Game({
+        playedBy: req.body.name,
+        mode: 'marathon',
+        score: req.body.score,
+        level: req.body.level,
+        lines: req.body.lines
+    });
+    try{
+        const newSubmission = await gameData.save();
+    }catch(err){
+        res.status(400).send(err);
+    }
+    res.redirect('/');
 });
 
-app.get('/api',(req, res) =>{
+app.get('/marathon_leaderboards', async (req, res)=>{
+    try{
+        const games = await Game.aggregate([
+            {$match: {mode: 'marathon'}},
+            {$group: {
+                _id:'$playedBy',
+                level:{$first:'$level'},
+                score:{$first:'$score'},
+                lines:{$first:'$lines'}
+            }},
+            {$sort: {level:-1, score:-1, lines:-1,_id:-1}},
+        ]);
+        const table = [];
+        for (r of games){
+            const game = {
+                level: r.level,
+                score: r.score,
+                lines: r.lines,
+                player: r._id
+            }
+            table.push(game);
+        }
+        res.render('marathon_leaderboards',{data: table});
+    }catch(err){
+        res.status(400).send(err);
+    }
+});
+
+app.get('/api', (req, res) =>{
     res.send('We are on api');
 });
  
