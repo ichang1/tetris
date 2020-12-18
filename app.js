@@ -90,7 +90,7 @@ app.get('/marathon_leaderboards', async (req, res)=>{
 });
 
 app.get('/api', (req, res) =>{
-    res.send('We are on api');
+    res.render('api');
 });
  
 //listen
