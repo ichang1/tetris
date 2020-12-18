@@ -5,7 +5,12 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const Game = require('./models/Game');
+const PORT = 5000;
+const http = require('http');
+const server = http.Server(app);
 require('dotenv/config');
+
+app.use(express.static('client'));
 
 // app.engine('ejs', require('express-ejs-extend')); // add this line
 app.set('view engine', 'ejs');
@@ -89,4 +94,6 @@ app.get('/api', (req, res) =>{
 });
  
 //listen
-app.listen(3000);
+server.listen(PORT, () => {
+    console.log('server running');
+});
